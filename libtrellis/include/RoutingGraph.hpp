@@ -63,6 +63,7 @@ struct RoutingArc
     RoutingId source;
     RoutingId sink;
     bool configurable = false;
+    int psuedo_type = 0;
     mutable int cdb_id = 0;
 };
 

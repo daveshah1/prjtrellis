@@ -122,6 +122,33 @@ shared_ptr<RoutingGraph> Chip::get_routing_graph()
         if (tile->info.type == "PLC2") {
             for (int z = 0; z < 4; z++)
                 Bels::add_lc(*rg, x, y, z);
+
+            // Add LUT permutation psuedo-pips
+            for (int z = 0; z < 8; z++) {
+                for (char ii : {'A', 'B', 'C', 'D'}) {
+                    for (char jj : {'A', 'B', 'C', 'D'}) {
+                        if (ii == jj)
+                            continue;
+                        std::string srcname = fmt(ii << z);
+                        std::string snkname = fmt(jj << z << "_SLICE");
+                        RoutingId sink = rg->globalise_net(y, x, snkname);
+                        if (sink == RoutingId())
+                            continue;
+                        RoutingId src = rg->globalise_net(y, x, srcname);
+                        if (src == RoutingId())
+                            continue;
+                        RoutingArc rarc;
+                        rarc.id = rg->ident(srcname + "=>" + snkname);
+                        rarc.source = src;
+                        rarc.sink = sink;
+                        rarc.tiletype = rg->ident("PLC2");
+                        rarc.configurable = true;
+                        rg->add_arc(Location(x, y), rarc);
+                        rarc.psuedo_type = 10;
+                    }
+                }
+            }
+
         }
         // PIO Bels
         if (tile->info.type.find("PICL0") != string::npos || tile->info.type.find("PICR0") != string::npos)
